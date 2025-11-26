@@ -1,3 +1,20 @@
+# -----------------------
+# 1. Build front-end assets
+# -----------------------
+FROM node:20 AS frontend
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build    # <-- this generates /public/build
+
+
+# -----------------------
+# 2. PHP + Apache image
+# -----------------------
 FROM php:8.3-apache
 
 WORKDIR /var/www
@@ -12,35 +29,35 @@ RUN apt-get update && apt-get install -y \
     git \
     zip \
     curl \
-    libpq-dev \
-    postgresql-client \
     libicu-dev \
-    && docker-php-ext-install intl \
-    && rm -rf /var/lib/apt/lists/*
+    libpq-dev \
+    postgresql-client && \
+    docker-php-ext-install intl && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions including PostgreSQL
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo pdo_pgsql zip
 
-# Enable Apache mod_rewrite for Laravel routing
+# Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Set Apache DocumentRoot to Laravel public folder
+# Set DocumentRoot
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/public|g' /etc/apache2/sites-available/000-default.conf
 
 # Copy app files
 COPY . /var/www
 
-# Install Composer
+# Copy the Vite build from the Node stage
+COPY --from=frontend /app/public/build /var/www/public/build
+
+# Install Composer and app dependencies
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Install Laravel dependencies
-RUN composer install --no-interaction --prefer-dist
-
-# Laravel caching and optimization
+# Cache Laravel
 RUN php artisan config:cache \
     && php artisan route:cache \
-    && php artisan view:cache 
+    && php artisan view:cache
 
 # Fix permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
