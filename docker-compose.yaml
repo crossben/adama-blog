@@ -5,8 +5,14 @@ services:
       dockerfile: Dockerfile
     container_name: adama-blog
     ports:
-      - "80"  # Maps host port 80 to container's Apache port
+      - "80"
     volumes:
-      - .:/var/www
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
+      # - ./.env:/var/www/.env
     networks:
       - laravel_network
+
+networks:
+  laravel_network:
+    driver: bridge
