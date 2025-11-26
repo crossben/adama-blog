@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     libpq-dev \
     postgresql-client \
+    libicu-dev \
+    && docker-php-ext-install intl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions including PostgreSQL
