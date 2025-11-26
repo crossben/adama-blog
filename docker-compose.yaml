@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: univers3s-api
+    ports:
+      - "80"  # Maps host port 80 to container's Apache port
+    volumes:
+      - .:/var/www
+    networks:
+      - laravel_network
