@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: univers3s-api
+    container_name: adama-blog
     ports:
       - "80"  # Maps host port 80 to container's Apache port
     volumes:
